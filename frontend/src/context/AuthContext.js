@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { authService } from '../services/auth';
 import toast from 'react-hot-toast';
 
@@ -107,6 +108,7 @@ const AuthContext = createContext();
 // Auth provider component
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const router = useRouter();
 
   // Login function
   const login = async (credentials) => {
@@ -130,6 +132,12 @@ export const AuthProvider = ({ children }) => {
         });
 
         toast.success('Login successful!');
+        
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+          router.replace('/dashboard');
+        }, 100);
+        
         return response;
       } else {
         throw new Error(response.error || 'Login failed');

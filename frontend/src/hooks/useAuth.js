@@ -9,11 +9,10 @@ export const useAuthRedirect = () => {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        // Redirect based on role
-        if (user?.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
+        const target = '/dashboard';
+
+        if (router.pathname !== target) {
+          router.replace(target);
         }
       }
     }

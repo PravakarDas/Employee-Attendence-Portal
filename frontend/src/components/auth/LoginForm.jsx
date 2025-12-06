@@ -9,6 +9,7 @@ import { isValidEmail } from '../../utils/helpers';
 const LoginForm = () => {
   const { login, isLoading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -18,11 +19,20 @@ const LoginForm = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
+    // Prevent multiple submissions
+    if (isSubmitting || isLoading) {
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       await login(data);
+      // Redirect is handled by login.jsx useEffect
     } catch (error) {
       // Error is already handled by AuthContext
       console.error('Login error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -132,10 +142,10 @@ const LoginForm = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {isLoading || isSubmitting ? (
                 <>
                   <LoadingSpinner size="sm" color="white" />
                   <span className="ml-2">Signing in...</span>
