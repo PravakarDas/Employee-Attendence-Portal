@@ -25,6 +25,7 @@ const EmployeeManagement = () => {
 
   useEffect(() => {
     loadEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.current, searchTerm]);
 
   const loadEmployees = async () => {

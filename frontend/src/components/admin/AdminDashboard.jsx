@@ -6,6 +6,7 @@ import { employeeService } from '../../services/employee';
 import { attendanceService } from '../../services/attendance';
 import { LoadingSpinner } from '../common/Loading';
 import EmployeeManagement from './EmployeeManagement';
+import AttendanceManagement from './AttendanceManagement';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -204,11 +205,22 @@ const AdminDashboard = () => {
             >
               Employee Management
             </button>
+            <button
+              onClick={() => setActiveTab('attendance')}
+              className={`${
+                activeTab === 'attendance'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Attendance Management
+            </button>
           </nav>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'employees' && <EmployeeManagement />}
+        {activeTab === 'attendance' && <AttendanceManagement />}
       </div>
     </div>
   );
