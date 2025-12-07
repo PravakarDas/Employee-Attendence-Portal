@@ -34,6 +34,15 @@ const employeeSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  faceEmbedding: {
+    type: [Number],
+    default: [],
+    select: false // Don't include by default for security
+  },
+  faceRegisteredAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

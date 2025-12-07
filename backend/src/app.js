@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const attendanceRoutes = require('./routes/attendance');
+const faceRoutes = require('./routes/face');
 
 // Initialize Express app
 const app = express();
@@ -117,6 +118,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/face', faceRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -128,6 +130,7 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       employees: '/api/employees',
       attendance: '/api/attendance',
+      face: '/api/face',
       health: '/health'
     }
   });
