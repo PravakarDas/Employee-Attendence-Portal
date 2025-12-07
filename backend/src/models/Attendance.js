@@ -20,7 +20,8 @@ const attendanceSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true // Add index for better query performance
   },
   notes: {
     type: String,
@@ -41,13 +42,18 @@ const attendanceSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Add compound index for employee and date queries
+attendanceSchema.index({ employee_id: 1, date: -1 });
+attendanceSchema.index({ employee_id: 1, status: 1 });
+
 // Instance method to check out
-attendanceSchema.methods.checkOut = async function() {
+attendanceSchema.methods.checkOut = async function(checkOutTime = null) {
   if (this.check_out) {
     throw new Error('Already checked out');
   }
 
-  this.check_out = new Date();
+  // Use provided time or fall back to current time
+  this.check_out = checkOutTime || new Date();
   this.status = 'completed';
 
   // Calculate total hours

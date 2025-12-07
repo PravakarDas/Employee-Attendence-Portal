@@ -1,5 +1,6 @@
 const Attendance = require('../models/Attendance');
 const Employee = require('../models/Employee');
+const { getReliableTime, calculateDuration } = require('../utils/time');
 
 // Check-in employee
 const checkIn = async (req, res) => {
@@ -26,13 +27,19 @@ const checkIn = async (req, res) => {
       });
     }
 
-    // Create new attendance record
+    // Get reliable timestamp from external source
+    const checkInTime = await getReliableTime();
+
+    // Create new attendance record with reliable timestamp
     const attendance = new Attendance({
       employee_id: employeeId,
-      check_in: new Date()
+      check_in: checkInTime,
+      date: checkInTime // Store the date for the attendance record
     });
 
     await attendance.save();
+
+    console.log(`Check-in recorded for employee ${employeeId} at ${checkInTime.toISOString()}`);
 
     // Populate employee data
     await attendance.populate('employee_id', 'name email department');
@@ -82,13 +89,18 @@ const checkOut = async (req, res) => {
       });
     }
 
-    // Check out the attendance
-    await activeAttendance.checkOut();
+    // Get reliable timestamp from external source
+    const checkOutTime = await getReliableTime();
+
+    // Check out the attendance with reliable timestamp
+    await activeAttendance.checkOut(checkOutTime);
+
+    console.log(`Check-out recorded for employee ${employeeId} at ${checkOutTime.toISOString()}`);
 
     // Calculate duration for response
     const checkInTime = new Date(activeAttendance.check_in);
-    const checkOutTime = new Date(activeAttendance.check_out);
-    const duration = checkOutTime - checkInTime;
+    const checkOutTimeStored = new Date(activeAttendance.check_out);
+    const duration = checkOutTimeStored - checkInTime;
     const hours = Math.floor(duration / (1000 * 60 * 60));
     const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
 
