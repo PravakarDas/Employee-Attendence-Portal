@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { employeeService } from '../../services/employee';
 import toast from 'react-hot-toast';
+import { validateEmail, validatePassword, validateRequired } from '../../utils/validation';
 
 const CreateEmployeeModal = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -27,25 +28,17 @@ const CreateEmployeeModal = ({ onClose, onSuccess }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
+    const nameError = validateRequired(formData.name, 'Name');
+    if (nameError) newErrors.name = nameError;
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
 
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    const passwordError = validatePassword(formData.password, true);
+    if (passwordError) newErrors.password = passwordError;
 
-    if (!formData.department.trim()) {
-      newErrors.department = 'Department is required';
-    }
+    const departmentError = validateRequired(formData.department, 'Department');
+    if (departmentError) newErrors.department = departmentError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

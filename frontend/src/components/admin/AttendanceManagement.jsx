@@ -6,6 +6,7 @@ import { employeeService } from '../../services/employee';
 import { LoadingSpinner } from '../common/Loading';
 import { formatDateTime } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import { PAGINATION } from '../../utils/constants';
 
 const AttendanceManagement = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -29,7 +30,7 @@ const AttendanceManagement = () => {
 
   const loadEmployees = async () => {
     try {
-      const response = await employeeService.getAllEmployees({ limit: 100 });
+      const response = await employeeService.getAllEmployees({ limit: PAGINATION.MAX_LIMIT });
       if (response.success) {
         setEmployees(response.data.employees);
       }
@@ -43,34 +44,41 @@ const AttendanceManagement = () => {
       setLoading(true);
       
       if (selectedEmployee === 'all') {
-        // For now, we'll load attendance for first few employees
-        // In a real implementation, you might want to add an admin endpoint
-        const allRecords = [];
-        for (const employee of employees.slice(0, 10)) {
+        // Load attendance for first N employees (limited to avoid performance issues)
+        // Note: In production, a dedicated backend endpoint should be created for this
+        const limitedEmployees = employees.slice(0, PAGINATION.ATTENDANCE_EMPLOYEE_LIMIT);
+        
+        // Make parallel requests for better performance
+        const attendancePromises = limitedEmployees.map(async (employee) => {
           try {
             const response = await attendanceService.getEmployeeAttendance(employee._id, {
               startDate: new Date(dateRange.startDate),
               endDate: new Date(dateRange.endDate),
-              limit: 100
+              limit: PAGINATION.MAX_LIMIT
             });
             
             if (response.success && response.data.attendance) {
-              allRecords.push(...response.data.attendance.map(record => ({
+              return response.data.attendance.map(record => ({
                 ...record,
                 employeeName: employee.name,
                 employeeEmail: employee.email
-              })));
+              }));
             }
+            return [];
           } catch (error) {
             console.error(`Failed to load attendance for ${employee.name}:`, error);
+            return [];
           }
-        }
+        });
+
+        const results = await Promise.all(attendancePromises);
+        const allRecords = results.flat();
         setAttendanceRecords(allRecords.sort((a, b) => new Date(b.check_in) - new Date(a.check_in)));
       } else {
         const response = await attendanceService.getEmployeeAttendance(selectedEmployee, {
           startDate: new Date(dateRange.startDate),
           endDate: new Date(dateRange.endDate),
-          limit: 100
+          limit: PAGINATION.MAX_LIMIT
         });
 
         if (response.success) {

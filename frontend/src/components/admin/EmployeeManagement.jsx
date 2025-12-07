@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import CreateEmployeeModal from './CreateEmployeeModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import DeleteEmployeeModal from './DeleteEmployeeModal';
+import { PAGINATION } from '../../utils/constants';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -33,7 +34,7 @@ const EmployeeManagement = () => {
       setLoading(true);
       const response = await employeeService.getAllEmployees({
         page: pagination.current,
-        limit: 10,
+        limit: PAGINATION.EMPLOYEE_LIST_LIMIT,
         search: searchTerm,
       });
 
