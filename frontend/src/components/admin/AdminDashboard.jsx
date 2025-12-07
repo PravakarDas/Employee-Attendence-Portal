@@ -18,6 +18,13 @@ const AdminDashboard = () => {
     loadStats();
   }, []);
 
+  // Reload stats when switching to overview tab
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      loadStats();
+    }
+  }, [activeTab]);
+
   const loadStats = async () => {
     try {
       setLoading(true);
@@ -33,6 +40,11 @@ const AdminDashboard = () => {
     }
   };
 
+  // Callback to refresh stats after CRUD operations
+  const handleDataChange = () => {
+    loadStats();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -46,12 +58,28 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Admin Dashboard
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back, {user?.name}! Manage your organization from here.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Admin Dashboard
+              </h1>
+              <p className="mt-2 text-gray-600">
+                Welcome back, {user?.name}! Manage your organization from here.
+              </p>
+            </div>
+            {activeTab === 'overview' && (
+              <button
+                onClick={loadStats}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -219,7 +247,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'employees' && <EmployeeManagement />}
+        {activeTab === 'employees' && <EmployeeManagement onDataChange={handleDataChange} />}
         {activeTab === 'attendance' && <AttendanceManagement />}
       </div>
     </div>
