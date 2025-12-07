@@ -439,11 +439,365 @@ const getAttendanceStats = async (req, res) => {
   }
 };
 
+// Create manual attendance entry (admin only)
+const createManualAttendance = async (req, res) => {
+  try {
+    const { employee_id, check_in, check_out, date, notes } = req.body;
+
+    // Validate employee exists
+    const employee = await Employee.findById(employee_id);
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        error: 'Employee not found'
+      });
+    }
+
+    // Check if attendance already exists for this date
+    const existingDate = new Date(date || check_in);
+    existingDate.setHours(0, 0, 0, 0);
+    const nextDate = new Date(existingDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const existingAttendance = await Attendance.findOne({
+      employee_id,
+      date: {
+        $gte: existingDate,
+        $lt: nextDate
+      }
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({
+        success: false,
+        error: 'Attendance record already exists for this date'
+      });
+    }
+
+    // Create attendance record
+    const checkInTime = new Date(check_in);
+    const checkOutTime = check_out ? new Date(check_out) : null;
+
+    const attendance = new Attendance({
+      employee_id,
+      check_in: checkInTime,
+      check_out: checkOutTime,
+      date: date || checkInTime,
+      notes: notes || `Manually created by admin ${req.employee.name}`,
+      created_by: req.employee._id
+    });
+
+    // Calculate total hours if check_out is provided
+    if (checkOutTime) {
+      const duration = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+      attendance.total_hours = parseFloat(duration.toFixed(2));
+      attendance.status = 'completed';
+    } else {
+      attendance.status = 'active';
+    }
+
+    await attendance.save();
+    await attendance.populate('employee_id', 'name email department');
+
+    console.log(`Manual attendance created by admin ${req.employee.email} for employee ${employee.email}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Attendance record created successfully',
+      data: {
+        attendance
+      }
+    });
+  } catch (error) {
+    console.error('Create manual attendance error:', error);
+
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+// Update attendance record (admin only)
+const updateAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { check_in, check_out, notes, status } = req.body;
+
+    const attendance = await Attendance.findById(id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        error: 'Attendance record not found'
+      });
+    }
+
+    // Update fields
+    if (check_in) {
+      attendance.check_in = new Date(check_in);
+      attendance.date = new Date(check_in);
+    }
+
+    if (check_out) {
+      attendance.check_out = new Date(check_out);
+    }
+
+    if (notes) {
+      attendance.notes = notes;
+    }
+
+    if (status) {
+      attendance.status = status;
+    }
+
+    // Recalculate total hours if both check_in and check_out exist
+    if (attendance.check_in && attendance.check_out) {
+      const checkInTime = new Date(attendance.check_in);
+      const checkOutTime = new Date(attendance.check_out);
+      const duration = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+      attendance.total_hours = parseFloat(duration.toFixed(2));
+      attendance.status = 'completed';
+    }
+
+    // Add update audit trail
+    attendance.notes = (attendance.notes || '') + ` | Updated by admin ${req.employee.name} on ${new Date().toLocaleString()}`;
+
+    await attendance.save();
+    await attendance.populate('employee_id', 'name email department');
+
+    console.log(`Attendance ${id} updated by admin ${req.employee.email}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Attendance record updated successfully',
+      data: {
+        attendance
+      }
+    });
+  } catch (error) {
+    console.error('Update attendance error:', error);
+
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+// Delete attendance record (admin only)
+const deleteAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const attendance = await Attendance.findById(id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        error: 'Attendance record not found'
+      });
+    }
+
+    await Attendance.findByIdAndDelete(id);
+
+    console.log(`Attendance ${id} deleted by admin ${req.employee.email}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Attendance record deleted successfully',
+      data: {
+        deletedAttendanceId: id
+      }
+    });
+  } catch (error) {
+    console.error('Delete attendance error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+// Get admin dashboard statistics
+const getAdminDashboard = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Total employees
+    const totalEmployees = await Employee.countDocuments();
+    const totalAdmins = await Employee.countDocuments({ role: 'admin' });
+    
+    // Today's attendance
+    const todayCheckIns = await Attendance.countDocuments({
+      date: { $gte: today, $lt: tomorrow }
+    });
+    
+    const todayCheckOuts = await Attendance.countDocuments({
+      date: { $gte: today, $lt: tomorrow },
+      check_out: { $ne: null }
+    });
+
+    const activeNow = await Attendance.countDocuments({
+      check_out: null,
+      check_in: { $gte: today, $lt: tomorrow }
+    });
+
+    const absentToday = totalEmployees - todayCheckIns;
+
+    // Recent activity - last 10 check-ins/check-outs
+    const recentActivity = await Attendance.find({
+      date: { $gte: today, $lt: tomorrow }
+    })
+      .populate('employee_id', 'name email department')
+      .sort({ check_in: -1 })
+      .limit(10);
+
+    // Department-wise attendance today
+    const departmentStats = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: today, $lt: tomorrow }
+        }
+      },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: 'employee_id',
+          foreignField: '_id',
+          as: 'employee'
+        }
+      },
+      {
+        $unwind: '$employee'
+      },
+      {
+        $group: {
+          _id: '$employee.department',
+          present: { $sum: 1 },
+          checkedOut: {
+            $sum: { $cond: [{ $ne: ['$check_out', null] }, 1, 0] }
+          },
+          totalHours: { $sum: '$total_hours' }
+        }
+      },
+      {
+        $sort: { present: -1 }
+      }
+    ]);
+
+    // Get total employees per department for absent calculation
+    const departmentTotals = await Employee.aggregate([
+      {
+        $group: {
+          _id: '$department',
+          total: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Merge department stats
+    const departmentMap = departmentTotals.reduce((acc, dept) => {
+      acc[dept._id] = dept.total;
+      return acc;
+    }, {});
+
+    const enrichedDepartmentStats = departmentStats.map(dept => ({
+      department: dept._id,
+      present: dept.present,
+      checkedOut: dept.checkedOut,
+      totalHours: Math.round(dept.totalHours * 100) / 100,
+      total: departmentMap[dept._id] || 0,
+      absent: (departmentMap[dept._id] || 0) - dept.present
+    }));
+
+    // Add departments with no attendance today
+    Object.keys(departmentMap).forEach(deptName => {
+      if (!enrichedDepartmentStats.find(d => d.department === deptName)) {
+        enrichedDepartmentStats.push({
+          department: deptName,
+          present: 0,
+          checkedOut: 0,
+          totalHours: 0,
+          total: departmentMap[deptName],
+          absent: departmentMap[deptName]
+        });
+      }
+    });
+
+    // Weekly trend (last 7 days)
+    const weeklyTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(today);
+      dayStart.setDate(today.getDate() - i);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const count = await Attendance.countDocuments({
+        date: { $gte: dayStart, $lt: dayEnd }
+      });
+
+      weeklyTrend.push({
+        date: dayStart.toISOString().split('T')[0],
+        checkIns: count
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        overview: {
+          totalEmployees,
+          totalAdmins,
+          presentToday: todayCheckIns,
+          absentToday,
+          activeNow,
+          checkedOutToday: todayCheckOuts
+        },
+        recentActivity,
+        departmentStats: enrichedDepartmentStats,
+        weeklyTrend
+      }
+    });
+  } catch (error) {
+    console.error('Get admin dashboard error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   checkIn,
   checkOut,
   getCurrentStatus,
   getEmployeeAttendance,
   getAllAttendance,
-  getAttendanceStats
+  getAttendanceStats,
+  createManualAttendance,
+  updateAttendance,
+  deleteAttendance,
+  getAdminDashboard
 };

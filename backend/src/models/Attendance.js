@@ -32,6 +32,11 @@ const attendanceSchema = new mongoose.Schema({
     enum: ['active', 'completed', 'absent', 'leave'],
     default: 'active'
   },
+  created_by: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Employee',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

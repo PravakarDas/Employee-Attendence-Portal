@@ -6,7 +6,11 @@ const {
   getCurrentStatus,
   getEmployeeAttendance,
   getAllAttendance,
-  getAttendanceStats
+  getAttendanceStats,
+  createManualAttendance,
+  updateAttendance,
+  deleteAttendance,
+  getAdminDashboard
 } = require('../controllers/attendanceController');
 const { authenticate, adminOnly, selfOrAdmin } = require('../middleware/auth');
 const {
@@ -45,5 +49,9 @@ router.get('/:employeeId', validateObjectId, validateDateRange, validatePaginati
 // Admin-only routes
 router.get('/', adminOnly, validateDateRange, validatePagination, getAllAttendance);
 router.get('/stats/overview', adminOnly, getAttendanceStats);
+router.get('/admin/dashboard', adminOnly, getAdminDashboard);
+router.post('/admin/manual', adminOnly, createManualAttendance);
+router.put('/admin/:id', adminOnly, validateObjectId, updateAttendance);
+router.delete('/admin/:id', adminOnly, validateObjectId, deleteAttendance);
 
 module.exports = router;

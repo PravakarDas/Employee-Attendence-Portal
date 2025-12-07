@@ -133,9 +133,13 @@ export const AuthProvider = ({ children }) => {
 
         toast.success('Login successful!');
         
-        // Redirect to dashboard after successful login
+        // Redirect based on user role after successful login
         setTimeout(() => {
-          router.replace('/dashboard');
+          if (response.data.user.role === 'admin') {
+            router.replace('/admin');
+          } else {
+            router.replace('/dashboard');
+          }
         }, 100);
         
         return response;

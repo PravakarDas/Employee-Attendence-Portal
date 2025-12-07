@@ -1,9 +1,12 @@
-import { useAuth } from '../context/AuthContext';
+import { useAuth as useAuthContext } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
+// Re-export useAuth from context
+export { useAuth } from '../context/AuthContext';
+
 export const useAuthRedirect = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +25,7 @@ export const useAuthRedirect = () => {
 };
 
 export const useProtectedRoute = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export const useProtectedRoute = () => {
 };
 
 export const useAdminRoute = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -50,5 +53,3 @@ export const useAdminRoute = () => {
 
   return { isAuthenticated, isLoading, user };
 };
-
-export default useAuth;
