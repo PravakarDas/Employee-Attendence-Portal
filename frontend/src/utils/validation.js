@@ -1,7 +1,7 @@
 // Form validation utilities
 
-// Email regex pattern
-export const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+// Email regex pattern - simplified to avoid ReDoS vulnerability
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Validate email format
 export const validateEmail = (email) => {
