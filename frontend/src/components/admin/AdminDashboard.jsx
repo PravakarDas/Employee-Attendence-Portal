@@ -7,6 +7,7 @@ import { attendanceService } from '../../services/attendance';
 import { LoadingSpinner } from '../common/Loading';
 import EmployeeManagement from './EmployeeManagement';
 import AttendanceManagement from './AttendanceManagement';
+import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -28,13 +29,23 @@ const AdminDashboard = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
+      console.log('Loading employee stats...');
       const response = await employeeService.getEmployeeStats();
+      console.log('Stats response:', response);
 
       if (response.success) {
+        console.log('Stats data:', response.data);
         setStats(response.data);
+      } else {
+        console.error('Stats fetch unsuccessful:', response);
+        // Show error message to user
+        toast.error('Failed to load statistics');
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      // Show error message to user
+      toast.error('Failed to load statistics. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +56,7 @@ const AdminDashboard = () => {
     loadStats();
   };
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="flex items-center justify-center py-20">
         <LoadingSpinner size="xl" color="primary" />
@@ -76,11 +87,32 @@ const AdminDashboard = () => {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Refresh
+                {loading ? 'Loading...' : 'Refresh'}
               </button>
             )}
           </div>
         </div>
+
+        {/* Show error message if no stats */}
+        {!loading && !stats && activeTab === 'overview' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Unable to load statistics
+                </h3>
+                <p className="mt-1 text-sm text-yellow-700">
+                  Please check that the backend is running and connected to the database. Click the Refresh button to try again.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         {activeTab === 'overview' && (

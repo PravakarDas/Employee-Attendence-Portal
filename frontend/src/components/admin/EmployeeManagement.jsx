@@ -32,19 +32,32 @@ const EmployeeManagement = ({ onDataChange }) => {
   const loadEmployees = async () => {
     try {
       setLoading(true);
+      console.log('Loading employees with params:', {
+        page: pagination.current,
+        limit: PAGINATION.EMPLOYEE_LIST_LIMIT,
+        search: searchTerm,
+      });
+      
       const response = await employeeService.getAllEmployees({
         page: pagination.current,
         limit: PAGINATION.EMPLOYEE_LIST_LIMIT,
         search: searchTerm,
       });
 
+      console.log('Employees response:', response);
+
       if (response.success) {
+        console.log('Employees data:', response.data);
         setEmployees(response.data.employees);
         setPagination(response.data.pagination);
+      } else {
+        console.error('Employees fetch unsuccessful:', response);
+        toast.error('Failed to load employees');
       }
     } catch (error) {
       console.error('Failed to load employees:', error);
-      toast.error('Failed to load employees');
+      console.error('Error details:', error.response?.data || error.message);
+      toast.error('Failed to load employees. Please check your connection.');
     } finally {
       setLoading(false);
     }
