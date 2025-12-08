@@ -406,18 +406,31 @@ Content-Type: application/json
 ## 🎨 Screenshots
 
 ### Login Page
-Modern and secure login interface with form validation.
+Modern and secure login interface with form validation.  
+![Login Page](screenshots/loginpanel.png)
 
 ### Employee Dashboard
-Real-time attendance tracking with statistics and quick actions.
+Real-time attendance tracking with statistics and quick actions.  
+![Employee Dashboard](screenshots/empoyeedashboard.png)
 
 ### Admin Panel
-Comprehensive management tools for attendance and employee oversight.
+Comprehensive management tools for attendance and employee oversight.  
+![Admin Dashboard](screenshots/admindashboard.png)
 
 ### Face Registration
-Intuitive interface for registering facial biometrics.
+Intuitive interface for registering facial biometrics.  
+![Face Registration](screenshots/profile.png)
+
+### Employment Management (Admin)
+Tools for managing employee records efficiently.  
+![Employment Management](screenshots/adminemployementmanagment.png)
+
+### Face Recognition Check-in / Checkout
+Seamless attendance process using facial recognition.  
+![Face Recognition Process](screenshots/employeewithfacerecognationcheckin-checkoutprocess.png)
 
 ---
+
 
 ## 🧪 Testing
 
