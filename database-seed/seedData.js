@@ -8,6 +8,19 @@ const Attendance = require('../backend/src/models/Attendance');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_portal';
 
+// Helper function to generate realistic face embeddings (512-dimensional vector)
+// These are sample embeddings - in production, these would come from actual face images
+const generateSampleFaceEmbedding = (seed = 0) => {
+  const embedding = [];
+  // Generate a deterministic but realistic-looking embedding based on seed
+  for (let i = 0; i < 512; i++) {
+    // Use seed to make embeddings unique but consistent for each employee
+    const value = Math.sin(seed * 1000 + i * 0.1) * 0.5;
+    embedding.push(parseFloat(value.toFixed(6)));
+  }
+  return embedding;
+};
+
 const seedData = async () => {
   try {
     // Connect to database
@@ -25,76 +38,94 @@ const seedData = async () => {
     await Attendance.deleteMany({});
     console.log('✓ Cleared existing data');
 
-    // Create admin user
+    // Create admin user with face embedding
     console.log('Creating admin user...');
     const admin = new Employee({
       name: 'System Administrator',
       email: 'admin@company.com',
       password: 'admin123',
       role: 'admin',
-      department: 'IT'
+      department: 'IT',
+      faceEmbedding: generateSampleFaceEmbedding(0),
+      faceRegisteredAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
     });
     await admin.save();
-    console.log('✓ Admin user created');
+    console.log('✓ Admin user created with face embedding');
 
-    // Create sample employees
-    console.log('Creating sample employees...');
+    // Create sample employees with face embeddings
+    console.log('Creating sample employees with face embeddings...');
     const employees = [
       {
         name: 'John Doe',
         email: 'john@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Engineering'
+        department: 'Engineering',
+        faceEmbedding: generateSampleFaceEmbedding(1),
+        faceRegisteredAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Jane Smith',
         email: 'jane@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'HR'
+        department: 'HR',
+        faceEmbedding: generateSampleFaceEmbedding(2),
+        faceRegisteredAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Mike Johnson',
         email: 'mike@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Sales'
+        department: 'Sales',
+        faceEmbedding: generateSampleFaceEmbedding(3),
+        faceRegisteredAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Sarah Williams',
         email: 'sarah@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Marketing'
+        department: 'Marketing',
+        faceEmbedding: generateSampleFaceEmbedding(4),
+        faceRegisteredAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Robert Brown',
         email: 'robert@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Engineering'
+        department: 'Engineering',
+        faceEmbedding: generateSampleFaceEmbedding(5),
+        faceRegisteredAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Emily Davis',
         email: 'emily@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Finance'
+        department: 'Finance',
+        faceEmbedding: generateSampleFaceEmbedding(6),
+        faceRegisteredAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'David Wilson',
         email: 'david@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Operations'
+        department: 'Operations',
+        faceEmbedding: generateSampleFaceEmbedding(7),
+        faceRegisteredAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
       },
       {
         name: 'Lisa Anderson',
         email: 'lisa@company.com',
         password: 'password123',
         role: 'employee',
-        department: 'Customer Support'
+        department: 'Customer Support',
+        faceEmbedding: generateSampleFaceEmbedding(8),
+        faceRegisteredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
       }
     ];
 
@@ -198,7 +229,13 @@ const seedData = async () => {
     console.log('Admin: admin@company.com / admin123');
     console.log('Employees: [name]@company.com / password123');
     console.log('Names: John, Jane, Mike, Sarah, Robert, Emily, David, Lisa');
-    console.log('========================\n');
+    console.log('========================');
+    console.log('\n=== Face Recognition Data ===');
+    console.log('✓ All employees have face embeddings registered');
+    console.log('✓ Face embeddings are 512-dimensional vectors');
+    console.log('✓ Note: These are sample embeddings for testing');
+    console.log('✓ In production, use actual face photos for registration');
+    console.log('================================\n');
 
   } catch (error) {
     console.error('✗ Error seeding database:', error.message);
